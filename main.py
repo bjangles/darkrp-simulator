@@ -18,6 +18,7 @@ misunderstoodMessages = [
 "Huh?",
 "Pardon?",
 "Could you rephrase that?",
+"What a concept!",
 ]
 
 rules = [
@@ -43,17 +44,40 @@ def read(args):
         print() 
 
 def respawn():
-    print("You respawn.")
+    if Health < 1:
+    	print("You have respawned.")
+        Health = 100
+        #Set player position to spawnpoint
+        hasAK47 = False
+        hasShotgun = False
+        hasM4A1 = False
+        hasDEagle = False
+    else:
+        print("... You aren't dead, dummy.")
+    print()
 
+def check(args):
+    if len(args) < 2:
+        print("... Check what?")
+        print()
+        return
+    if args[1] == "players" or args[1] == "playercount":
+        print("Players Online: " + str(PlayerCount))
+        print()
+    if args[1] == "admins" or args[1] == "admincount":
+        print("Admins Online: " + str(AdminCount))
+        print()
 
 def parse(command):
     words = command.split(" ")
     verb = words[0]
     
     if verb == "read":
-        read(command.split(" "))
+        read(words)
     elif verb == "respawn":
         respawn()
+    elif verb == "check":
+        check(words)
     elif True:
         print(misunderstoodMessages[random.randint(1, len(misunderstoodMessages)-1)])
         print()
@@ -93,6 +117,16 @@ def newgame():
         print()
     
     print(newGameMessages[random.randint(1, len(newGameMessages))-1])
+    print()
+
+    print("Players Online: " + str(PlayerCount))
+    print("Admins Online: " + str(AdminCount))
+    if Attitude <= 25:
+        print("Server Attitude: Calm")
+    elif Attitude > 25 and Attitude < 75:
+        print("Server Attitude: Unrest")
+    elif Attitude >= 75:
+        print("Server Attitude: Anarchy")
     print()
 
     listen()
