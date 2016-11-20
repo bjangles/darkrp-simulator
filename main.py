@@ -21,6 +21,17 @@ misunderstoodMessages = [
 "What a concept!",
 ]
 
+generalHelp = [
+"Commands should be structured in the following form:",
+"<verb> [<noun>, ...]",
+"Using additional words when appropriate.",
+"",
+"Examples:",
+">help",
+">help example",
+">read rules",
+]
+
 rules = [
 "=====Lasciate ogne speranza, voi ch'intrate=====",
 "Rule 1: No cheating/exploiting/hacking/misbehaving/tomfoolery/mischief/deviation",
@@ -29,6 +40,8 @@ rules = [
 "Rule 4: Absolutely no disrespect to members of our staff will be tolerated. Unprovoked abuse towards unprivileged players is otherwise acceptable.",
 "Rule 5: Artyem is absolutely prohibited, unless you provide a warning milliseconds beforehand.",
 "Rule 6: All roleplaying chat must be broadcast in out-of-character chat, in order to ensure maximum 'arpee' experience.",
+"Rule 7: Any behavior that deviates from raiding is FailArpee and will not be tolerated under any circumstances.",
+"Rule 8: Attempting to modify your voice in any way, natural or digitally assisted, is grounds for an immediate ban.",
 " *** Your eyes glaze over as the rule count extends into the hundreds. *** ",
 ]
 
@@ -56,8 +69,9 @@ def newgame():
     Charisma = random.randint(1, 10)
     Luck = random.randint(1, 10)
     PlayerCount = random.randint(4, 64)
-    AdminCount = random.randint(0, int(PlayerCount - PlayerCount * 0.6))
-    AttitudeMod = 20
+    AdminCount = random.randint(0, int(PlayerCount - PlayerCount * 0.75))
+    Attitude = 0
+    AttitudeMod = 0
     Position = {0, 0}
     hasAK47 = False
     hasShotgun = False
@@ -98,8 +112,15 @@ def read(args):
         for i in rules:
             print(i)
         print() 
+    elif args[1] == "textbook":
+        print("That's the spirit! Stay in school, kid.")
+        print()
+    elif True:
+        print("Erm, I'm not really sure what you want me to read.")
+        print()
 
 def respawn():
+    global Health
     if Health < 1:
         print("You have respawned.")
         Health = 100
@@ -111,6 +132,17 @@ def respawn():
     else:
         print("... You aren't dead, dummy.")
     print()
+
+def help(args):
+    if len(args) < 2:
+        for i in generalHelp:
+            print(i)
+    elif args[1] == "example":
+        print("... Really?")
+        print()
+    elif True:
+        print("Not sure what you're talking about, kiddo")
+        print()
 
 def check(args):
     if len(args) < 2:
@@ -126,6 +158,9 @@ def check(args):
     elif args[1] == "attitude":
         print("Server Attitude: " + str(Attitude))
         print()
+    elif args[1] == "health":
+        print("Health: " + str(Health))
+        print()
     elif True:
         print("I'm not sure what that is, really.")
         print()
@@ -138,21 +173,15 @@ def handleAttitude():
     global AttitudeMod
     newAttitude = AttitudeMod
 
-    #newAttitude = 0
-    print(newAttitude)
-
     #Gradually decay adjusters
-    if AdminCount / PlayerCount >= 0.1:
-       newAttitude = newAttitude - 3
-    else:
-       newAttitude = newAttitude - 1
-
-    print(newAttitude)
+    if AttitudeMod > 0:
+        if AdminCount / PlayerCount >= 0.1:
+            newAttitude = newAttitude - 3
+        else:
+            newAttitude = newAttitude - 1
 
     #Set our new adjusters value
     AttitudeMod = newAttitude
-
-    print(newAttitude)
 
     #Base attitude calculations
     if AdminCount == 0:
@@ -162,14 +191,17 @@ def handleAttitude():
     if PlayerCount > 30:
         newAttitude = newAttitude + 20
 
-    print(newAttitude)
-
     #Set our new attitude!
     Attitude = newAttitude
 
 def handlePlayers():
+    global PlayerCount
     #Define behavior for player count to fluctuate
-    print()
+    chance = random.randint(1, 7) #1/6 chance :^)
+    if chance == 1:
+        PlayerCount -= 1
+    elif chance == 6:
+        PlayerCount += 1
 
 #Execute per-turn functions, where appropriate(such as when a non-status verb has been used)
 def handleTurn():
@@ -191,6 +223,9 @@ def parse(command):
         respawn()
     elif verb == "check":
         check(words)
+        executeAction = False
+    elif verb == "help":
+        help(words)
         executeAction = False
     elif True:
         print(misunderstoodMessages[random.randint(1, len(misunderstoodMessages)-1)])
