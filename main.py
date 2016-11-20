@@ -32,6 +32,62 @@ rules = [
 " *** Your eyes glaze over as the rule count extends into the hundreds. *** ",
 ]
 
+def newgame():
+    #Global Variables
+    global Cash
+    global Health
+    global Intelligence
+    global Perception
+    global Charisma
+    global Luck
+    global PlayerCount
+    global AdminCount
+    global Attitude
+    global AttitudeMod
+    global Position
+    global hasAK47
+    global hasShotgun
+    global hasM4A1
+    global hasDEagle
+    Cash = 1000
+    Health = 100
+    Intelligence = random.randint(1, 10)
+    Perception = random.randint(1, 10)
+    Charisma = random.randint(1, 10)
+    Luck = random.randint(1, 10)
+    PlayerCount = random.randint(4, 64)
+    AdminCount = random.randint(0, int(PlayerCount - PlayerCount * 0.6))
+    AttitudeMod = 20
+    Position = {0, 0}
+    hasAK47 = False
+    hasShotgun = False
+    hasM4A1 = False
+    hasDEagle = False
+
+    #Handle attitude so our initial status message is accurate
+    handlePlayers()
+    handleAttitude()
+
+    #Clear screen for 	a e s t h e t i c s
+    for i in range(1, 60):
+        print()
+    
+    #Print loading message
+    print(newGameMessages[random.randint(1, len(newGameMessages))-1])
+    print()
+
+    print("Players Online: " + str(PlayerCount))
+    print("Admins Online: " + str(AdminCount))
+    if Attitude <= 25:
+        print("Server Attitude: Calm")
+    elif Attitude > 25 and Attitude < 75:
+        print("Server Attitude: Unrest")
+    elif Attitude >= 75:
+        print("Server Attitude: Anarchy")
+    print()
+
+    listen()
+
 #Verbs
 def read(args):
     if len(args) < 2:
@@ -45,7 +101,7 @@ def read(args):
 
 def respawn():
     if Health < 1:
-    	print("You have respawned.")
+        print("You have respawned.")
         Health = 100
         #Set player position to spawnpoint
         hasAK47 = False
@@ -64,11 +120,68 @@ def check(args):
     if args[1] == "players" or args[1] == "playercount":
         print("Players Online: " + str(PlayerCount))
         print()
-    if args[1] == "admins" or args[1] == "admincount":
+    elif args[1] == "admins" or args[1] == "admincount":
         print("Admins Online: " + str(AdminCount))
         print()
+    elif args[1] == "attitude":
+        print("Server Attitude: " + str(Attitude))
+        print()
+    elif True:
+        print("I'm not sure what that is, really.")
+        print()
+    
+
+#Adjust attitude per-turn
+def handleAttitude():
+    #Attitude mod: actions which temporarily sway attitude
+    global Attitude
+    global AttitudeMod
+    newAttitude = AttitudeMod
+
+    #newAttitude = 0
+    print(newAttitude)
+
+    #Gradually decay adjusters
+    if AdminCount / PlayerCount >= 0.1:
+       newAttitude = newAttitude - 3
+    else:
+       newAttitude = newAttitude - 1
+
+    print(newAttitude)
+
+    #Set our new adjusters value
+    AttitudeMod = newAttitude
+
+    print(newAttitude)
+
+    #Base attitude calculations
+    if AdminCount == 0:
+        newAttitude = newAttitude + 50
+    if AdminCount / PlayerCount < 0.1:
+        newAttitude = newAttitude + 25
+    if PlayerCount > 30:
+        newAttitude = newAttitude + 20
+
+    print(newAttitude)
+
+    #Set our new attitude!
+    Attitude = newAttitude
+
+def handlePlayers():
+    #Define behavior for player count to fluctuate
+    print()
+
+#Execute per-turn functions, where appropriate(such as when a non-status verb has been used)
+def handleTurn():
+    #Player Fluctuations
+    handlePlayers()
+
+    #Server Attitude
+    handleAttitude()
 
 def parse(command):
+    executeAction = True
+
     words = command.split(" ")
     verb = words[0]
     
@@ -78,58 +191,14 @@ def parse(command):
         respawn()
     elif verb == "check":
         check(words)
+        executeAction = False
     elif True:
         print(misunderstoodMessages[random.randint(1, len(misunderstoodMessages)-1)])
         print()
+        executeAction = False
 
-def newgame():
-    #Global Variables
-    global Cash
-    global Health
-    global Intelligence
-    global Perception
-    global Charisma
-    global Luck
-    global PlayerCount
-    global AdminCount
-    global Attitude
-    global Position
-    global hasAK47
-    global hasShotgun
-    global hasM4A1
-    global hasDEagle
-    Cash = 1000
-    Health = 100
-    Intelligence = random.randint(1, 10)
-    Perception = random.randint(1, 10)
-    Charisma = random.randint(1, 10)
-    Luck = random.randint(1, 10)
-    PlayerCount = random.randint(4, 64)
-    AdminCount = random.randint(0, int(PlayerCount - PlayerCount * 0.6))
-    Attitude = 0
-    Position = {0, 0}
-    hasAK47 = False
-    hasShotgun = False
-    hasM4A1 = False
-    hasDEagle = False
-
-    for i in range(1, 60):
-        print()
-    
-    print(newGameMessages[random.randint(1, len(newGameMessages))-1])
-    print()
-
-    print("Players Online: " + str(PlayerCount))
-    print("Admins Online: " + str(AdminCount))
-    if Attitude <= 25:
-        print("Server Attitude: Calm")
-    elif Attitude > 25 and Attitude < 75:
-        print("Server Attitude: Unrest")
-    elif Attitude >= 75:
-        print("Server Attitude: Anarchy")
-    print()
-
-    listen()
+    if executeAction:
+        handleTurn()
 
 def listen():
     while Health > 0:
