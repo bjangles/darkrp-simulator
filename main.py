@@ -201,12 +201,17 @@ def handleAttitude():
 
 def handlePlayers():
     global PlayerCount
+    global AdminCount
     #Define behavior for player count to fluctuate
     chance = random.randint(1, 7) #1/6 chance :^)
     if chance == 1:
         PlayerCount -= 1
+        if random.random() <= AdminCount/PlayerCount and AdminCount > 0:
+        	AdminCount -= 1
     elif chance == 6:
         PlayerCount += 1
+        if random.random() <= AdminCount/PlayerCount:
+        	AdminCount += 1
 
 #Execute per-turn functions, where appropriate(such as when a non-status verb has been used)
 def handleTurn():
