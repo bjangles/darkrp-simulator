@@ -92,15 +92,20 @@ def newgame():
 
     print("Players Online: " + str(PlayerCount))
     print("Admins Online: " + str(AdminCount))
-    if Attitude <= 25:
-        print("Server Attitude: Calm")
-    elif Attitude > 25 and Attitude < 75:
-        print("Server Attitude: Unrest")
-    elif Attitude >= 75:
-        print("Server Attitude: Anarchy")
+    print("Server Attitude: " + translateAttitude(Attitude))    
     print()
 
     listen()
+
+def translateAttitude(amt):
+    if amt <= 25:
+        return "Calm"
+    elif amt > 25 and amt < 75:
+        return "Unrest"
+    elif amt >=75 and amt < 100:
+        return "Anarchy"
+    elif amt >= 100:
+        return "Complete Anarchy"
 
 #Verbs
 def read(args):
@@ -156,7 +161,7 @@ def check(args):
         print("Admins Online: " + str(AdminCount))
         print()
     elif args[1] == "attitude":
-        print("Server Attitude: " + str(Attitude))
+        print("Server Attitude: " + translateAttitude(Attitude))
         print()
     elif args[1] == "health":
         print("Health: " + str(Health))
