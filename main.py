@@ -1,4 +1,4 @@
-#!/bin/python3
+#!/usr/bin/env python3
 
 import os
 import random
@@ -7,7 +7,7 @@ import string
 newGameMessages = [
 "At last, you have finally finished downloading sixty gigabytes of content only paid users can access. Your eyes are filled with colors and your ears are overwhelmed with the sound of screaming prepubescent children. The world is your oyster.",
 "You have finally arrived in the promised land. It's a shame, though. You were just starting to like that Scary Monsters & Nice Sprites remix played at full volume.",
-"34 minutes and 12 seconds later. If only you had more time, you could've memorised the rules!",
+"34 minutes and 12 seconds later. If only you had more time, you could've memorized the rules!",
 "Woah! You totally forgot you were joining a server. Now it's time to stop forgetting and start regretting.",
 ]
 
@@ -45,6 +45,95 @@ rules = [
 " *** Your eyes glaze over as the rule count extends into the hundreds. *** ",
 ]
 
+def generatemap(size):
+    global Map
+
+    for i in range(size):
+        Map[i] = {}
+        for k in range(size):
+            tile = Map[i][k] = {}
+            tile["type"] = "clear"    
+            if random.random() > 0.9:
+                tile["type"] = "wall"
+            if i == 6 and k == 6:
+                tile["type"] = "player"
+
+def printmap():
+    print()
+
+    #Map Header
+    row = "\t" + "╔"
+    for i in range(45):
+        row = row + "═"
+    row = row + "╗"
+
+    #Legend Header
+    row = row + "\t" + "╔" + "═" + "╦"
+    for _ in range(21):
+        row = row + "═"
+    row = row + "╗"
+
+    print(row)
+
+    for i in range(len(Map)):
+        row = ""
+
+        #Compass Rose
+        if i == 0:
+            row = row + "   " + "N"
+        elif i == 1:
+            row = row + " " + "W" + " + " + "E"
+        elif i == 2     :
+            row = row + "   " + "S"
+
+        #Map Tile Wall
+        row = row + "\t"
+        row = row + "║"
+
+        #Map Tiles
+        for k in range(len(Map)):
+            tile = Map[i][k]
+            if tile["type"] == "clear":
+                row = row + "[ ]"
+            elif tile["type"] == "player":
+                row = row + "[X]"
+            elif tile["type"] == "wall":
+                row = row + "[■]"
+
+        #Map Tile Wall
+        row = row + "║"
+
+        legendData = [
+            ("X", "You!"),
+            ("P", "Police Station"),
+            ("G", "Gun Store"),
+            ("Q", "Prop Blocking"),
+            ("■", "Wall")
+        ]
+
+        #Legend Rows
+        if i < len(legendData):
+            row = row + " " + "║" + legendData[i][0] + "║" + " " + legendData[i][1]
+            if len(legendData[i][1]) < 13:
+                row = row + "\t" + "\t" + "║"
+            else:
+                row = row + "\t" + "║"
+
+        elif i == len(legendData):
+            row = row + " " + "╚" + "═" + "╩"
+            for i in range(21):
+                row = row + "═"
+            row = row + "╝"
+
+
+        print(row)
+
+    row = "\t" + "╚"
+    for i in range(45):
+        row = row + "═"
+    row = row + "╝"
+    print(row)
+
 def newgame():
     #Global Variables
     global Cash
@@ -63,6 +152,9 @@ def newgame():
     global hasShotgun
     global hasM4A1
     global hasDEagle
+    global Map
+    global Position
+
     Cash = 1000
     Health = 100
     Banned = False
@@ -80,11 +172,17 @@ def newgame():
     hasM4A1 = False
     hasDEagle = False
 
+    Map = {}
+    Position = (0, 0)
+
+    generatemap(15)
+
+
     #Handle attitude so our initial status message is accurate
     handlePlayers()
     handleAttitude()
 
-    #Clear screen for 	a e s t h e t i c s
+    #Clear screen for     a e s t h e t i c s
     for i in range(1, 60):
         print()
     
@@ -119,7 +217,7 @@ def read(args):
         for i in rules:
             print(i)
         print() 
-    elif args[1] == "textbook":
+    elif args[1] == "book":
         print("That's the spirit! Stay in school, kid.")
         print()
     elif True:
@@ -168,10 +266,12 @@ def check(args):
     elif args[1] == "health":
         print("Health: " + str(Health))
         print()
+    elif args[1] == "map":
+        printmap()
+        print()
     elif True:
         print("I'm not sure what that is, really.")
         print()
-    
 
 #Adjust attitude per-turn
 def handleAttitude():
@@ -209,11 +309,11 @@ def handlePlayers():
     if chance == 1 and PlayerCount > 1:
         PlayerCount -= 1
         if random.random() <= AdminCount/PlayerCount and AdminCount > 0:
-        	AdminCount -= 1
+            AdminCount -= 1
     elif chance == 6:
         PlayerCount += 1
         if random.random() <= AdminCount/PlayerCount:
-        	AdminCount += 1
+            AdminCount += 1
 
 #Execute per-turn functions, where appropriate(such as when a non-status verb has been used)
 def handleTurn():
@@ -240,13 +340,13 @@ def parse(command):
         help(words)
         executeAction = False
     elif verb == "quit" or verb == "disconnect":
-    	print("You have disconnected from the server.")
-    	print()
-    	response = input("Find a new server? (Y/n) ")
-    	if response == "n" or response == "no":
-    		raise SystemExit(0)
-    	elif True:
-    		newgame()
+        print("You have disconnected from the server.")
+        print()
+        response = input("Find a new server? (Y/n) ")
+        if response == "n" or response == "no":
+            raise SystemExit(0)
+        elif True:
+            newgame()
     elif True:
         print(misunderstoodMessages[random.randint(1, len(misunderstoodMessages)-1)])
         print()
