@@ -49,6 +49,7 @@ def newgame():
     #Global Variables
     global Cash
     global Health
+    global Banned
     global Intelligence
     global Perception
     global Charisma
@@ -64,6 +65,7 @@ def newgame():
     global hasDEagle
     Cash = 1000
     Health = 100
+    Banned = False
     Intelligence = random.randint(1, 10)
     Perception = random.randint(1, 10)
     Charisma = random.randint(1, 10)
@@ -204,7 +206,7 @@ def handlePlayers():
     global AdminCount
     #Define behavior for player count to fluctuate
     chance = random.randint(1, 7) #1/6 chance :^)
-    if chance == 1:
+    if chance == 1 and PlayerCount > 1:
         PlayerCount -= 1
         if random.random() <= AdminCount/PlayerCount and AdminCount > 0:
         	AdminCount -= 1
@@ -237,6 +239,14 @@ def parse(command):
     elif verb == "help":
         help(words)
         executeAction = False
+    elif verb == "quit" or verb == "disconnect":
+    	print("You have disconnected from the server.")
+    	print()
+    	response = input("Find a new server? (Y/n) ")
+    	if response == "n" or response == "no":
+    		raise SystemExit(0)
+    	elif True:
+    		newgame()
     elif True:
         print(misunderstoodMessages[random.randint(1, len(misunderstoodMessages)-1)])
         print()
@@ -246,7 +256,7 @@ def parse(command):
         handleTurn()
 
 def listen():
-    while Health > 0:
+    while not Banned:
         parse(input(">"))
 
 
