@@ -48,15 +48,33 @@ rules = [
 def generatemap(size):
     global Map
 
-    for i in range(size):
+    '''for i in range(size):
         Map[i] = {}
         for k in range(size):
             tile = Map[i][k] = {}
-            tile["type"] = "clear"    
+            tile["type"] = ""    
             if random.random() > 0.9:
                 tile["type"] = "wall"
             if i == 6 and k == 6:
-                tile["type"] = "player"
+                tile["type"] = "player"'''
+
+    Map = [
+                    [{"type": ""}, {"type": ""}, {"type": ""}, {"type": "wall"}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": "wall"}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""},],
+                    [{"type": ""}, {"type": ""}, {"type": ""}, {"type": "wall"}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": "wall"}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""},],
+                    [{"type": ""}, {"type": ""}, {"type": ""}, {"type": "wall"}, {"type": "wall"}, {"type": "wall"}, {"type": "wall"}, {"type": "wall"}, {"type": ""}, {"type": ""}, {"type": "wall"}, {"type": "wall"}, {"type": "wall"}, {"type": ""}, {"type": ""},],
+                    [{"type": "wall"}, {"type": "wall"}, {"type": "door"}, {"type": "wall"}, {"type": "", "player": True}, {"type": ""}, {"type": ""}, {"type": "door"}, {"type": ""}, {"type": ""}, {"type": "wall"}, {"type": "wall"}, {"type": "wall"}, {"type": ""}, {"type": ""},],
+                    [{"type": ""}, {"type": "door"}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": "wall"}, {"type": "wall"}, {"type": "wall"}, {"type": "wall"}, {"type": "wall"}, {"type": "wall"}, {"type": ""}, {"type": ""},],
+                    [{"type": ""}, {"type": "wall"}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": "wall"}, {"type": "door"}, {"type": "wall"},],
+                    [{"type": ""}, {"type": "wall"}, {"type": ""}, {"type": "wall"}, {"type": "door"}, {"type": "wall"}, {"type": "wall"}, {"type": ""}, {"type": "wall"}, {"type": "wall"}, {"type": "wall"}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""},],
+                    [{"type": "wall"}, {"type": "wall"}, {"type": ""}, {"type": "wall"}, {"type": ""}, {"type": ""}, {"type": "wall"}, {"type": ""}, {"type": "door"}, {"type": ""}, {"type": "wall"}, {"type": "wall"}, {"type": "wall"}, {"type": "wall"}, {"type": "wall"},],
+                    [{"type": ""}, {"type": ""}, {"type": ""}, {"type": "wall"}, {"type": ""}, {"type": ""}, {"type": "wall"}, {"type": ""}, {"type": "wall"}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""},],
+                    [{"type": "wall"}, {"type": "wall"}, {"type": ""}, {"type": "wall"}, {"type": "wall"}, {"type": "door"}, {"type": "wall"}, {"type": ""}, {"type": "wall"}, {"type": "wall"}, {"type": "wall"}, {"type": "wall"}, {"type": "wall"}, {"type": ""}, {"type": ""},],
+                    [{"type": ""}, {"type": "wall"}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": "wall"}, {"type": "wall"}, {"type": "wall"},],
+                    [{"type": ""}, {"type": "wall"}, {"type": "door"}, {"type": "wall"}, {"type": "wall"}, {"type": ""}, {"type": ""}, {"type": "wall"}, {"type": "wall"}, {"type": "door"}, {"type": "wall"}, {"type": ""}, {"type": "door"}, {"type": ""}, {"type": ""},],
+                    [{"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": "wall"}, {"type": ""}, {"type": ""}, {"type": "wall"}, {"type": ""}, {"type": ""}, {"type": "wall"}, {"type": "wall"}, {"type": "wall"}, {"type": ""}, {"type": ""},],
+                    [{"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": "wall"}, {"type": "wall"}, {"type": "wall"}, {"type": "wall"}, {"type": ""}, {"type": ""}, {"type": "wall"}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""},],
+                    [{"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": "wall"}, {"type": "wall"}, {"type": "wall"}, {"type": "wall"}, {"type": ""}, {"type": ""}, {"type": "wall"}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""},],
+                ]
 
 def printmap():
     print()
@@ -92,13 +110,20 @@ def printmap():
 
         #Map Tiles
         for k in range(len(Map)):
-            tile = Map[i][k]
-            if tile["type"] == "clear":
-                row = row + "[ ]"
-            elif tile["type"] == "player":
-                row = row + "[X]"
-            elif tile["type"] == "wall":
-                row = row + "[■]"
+            tileType = Map[i][k].get("type", "")
+            tilePlayer = Map[i][k].get("player", False)
+            marker = "[ ]"
+            if tileType == "wall":
+                marker = "[■]"
+            elif tileType == "door":
+                marker = "[D]"
+            elif tilePlayer == True:
+                marker = "[X]"
+            elif tileType == "gunstore":
+                marker = "[G]"
+            elif tileType == "police":
+                marker = "[P]"
+            row = row + marker
 
         #Map Tile Wall
         row = row + "║"
@@ -108,7 +133,8 @@ def printmap():
             ("P", "Police Station"),
             ("G", "Gun Store"),
             ("Q", "Prop Blocking"),
-            ("■", "Wall")
+            ("D", "Door"),
+            ("■", "Wall"),
         ]
 
         #Legend Rows
@@ -133,6 +159,24 @@ def printmap():
         row = row + "═"
     row = row + "╝"
     print(row)
+
+def adjacenttiles():
+    global Position
+    nTile = False
+    sTile = False
+    wTile = False
+    eTile = False
+
+    if not Position[0] == 0:
+        nTile = Map[Position[0] - 1][Position[1]]
+    if not Position[0] == 14:
+        sTile = Map[Position[0] + 1][Position[1]]
+    if not Position[1] == 0:
+        wTile = Map[Position[0]][Position[1] - 1]
+    if not Position[1] == 14:
+        eTile = Map[Position[0]][Position[1] + 1]
+
+    return {nTile, sTile, wTile, eTile}
 
 def newgame():
     #Global Variables
@@ -166,7 +210,7 @@ def newgame():
     AdminCount = random.randint(0, int(PlayerCount - PlayerCount * 0.75))
     Attitude = 0
     AttitudeMod = 0
-    Position = {0, 0}
+    Position = {3, 4}
     hasAK47 = False
     hasShotgun = False
     hasM4A1 = False
