@@ -37,7 +37,7 @@ class VerbSystem:
             print(random.choice(misunderstoodMessages))
             print()
 
-class Map:
+class MapSystem:
     def __init__(self):
         self.Map = {}
 
@@ -61,7 +61,7 @@ class Map:
             [{"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": "wall"}, {"type": "wall"}, {"type": "wall"}, {"type": "wall"}, {"type": ""}, {"type": ""}, {"type": "wall"}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""},],
         ]
 
-class Inventory:
+class InventorySystem:
     def __init__(self):
         self.Inventory = {}
 
@@ -110,16 +110,16 @@ class Player:
 
         self.Position = (0, 0)
 
-        self.InventorySystem = Inventory()
+        self.InventorySystem = InventorySystem()
         self.Spawn()
 
     def Spawn(self):
         #Find a spawn tile, and move us there
         #Also set our health back to full
         SpawnTile = None
-        for y in Map.Map:
-            for x in Map.Map:
-                if Map[x][y].get("type", "") == "spawn":
+        for y in range(len(MapSystem.Map)):
+            for x in range(len(MapSystem.Map)):
+                if MapSystem.Map[x][y].get("type", "") == "spawn":
                     SpawnTile = (x, y)
                     break
         self.Position = SpawnTile
@@ -153,8 +153,34 @@ class Player:
         return Roll
 
 def HandleTurn():
-    Player.Roll("Intelligence")
-    print()
+    AdjustAttitude()
+
+def AdjustAttitude():
+    #Attitude mod: actions which temporarily sway attitude
+    global Attitude
+    global AttitudeMod
+    newAttitude = AttitudeMod
+
+    #Gradually decay adjusters
+    if AttitudeMod > 0:
+        if AdminCount / PlayerCount >= 0.1:
+            newAttitude = newAttitude - 3
+        else:
+            newAttitude = newAttitude - 1
+
+    #Set our new adjusters value
+    AttitudeMod = newAttitude
+
+    #Base attitude calculations
+    if AdminCount == 0:
+        newAttitude = newAttitude + 50
+    if AdminCount / PlayerCount < 0.1:
+        newAttitude = newAttitude + 25
+    if PlayerCount > 30:
+        newAttitude = newAttitude + 20
+
+    #Set our new attitude!
+    Attitude = newAttitude
 
 def FluctuatePlayers():
     global PlayerCount
@@ -188,18 +214,40 @@ def CreateVariables():
     global AttitudeMod
     AttitudeMod = 0
 
-def main():
+def TranslateAttitude(amt):
+    if amt <= 25:
+        return "Calm"
+    elif amt > 25 and amt < 75:
+        return "Unrest"
+    elif amt >=75 and amt < 100:
+        return "Anarchy"
+    elif amt >= 100:
+        return "Complete Anarchy"
+
+def NewGame():
+    CreateVariables()
+
     global VerbSystem
     VerbSystem = VerbSystem()
 
     RegisterVerbs()
     RegisterItems()
 
-    global Map
-    Map = Map()
+    global MapSystem
+    MapSystem = MapSystem()
+    MapSystem.BuildMap()
 
     global Player
     Player = Player()
+
+    #Clear screen for     a e s t h e t i c s
+    for i in range(1, 60):
+        print()
+
+    print("Players Online: " + str(PlayerCount))
+    print("Admins Online: " + str(AdminCount))
+    print("Server Attitude: " + TranslateAttitude(Attitude))    
+    print() 
 
     while True:
         VerbSystem.Execute(input(">").lower())
@@ -215,26 +263,32 @@ def RegisterVerbs():
         #Check globals
         if args[1] == "health":
             print("Health: " + str(Player.Health))
+            print()
             return
         if args[1] == "players" or args[1] == "playercount":
             print("Players: " + str(PlayerCount))
+            print()
             return
         if args[1] == "admins" or args[1] == "admincount":
             print("Admins: " + str(AdminCount))
+            print()
             return
         if args[1] == "inventory":
             for i in Player.InventorySystem.Inventory:
                 print(Player.InventorySystem.Inventory[i]["name"])
             print()
             return
+        if args[1] == "attitude":
+            print("Attitude: " + TranslateAttitude(Attitude))
+            print()
+            return
 
         #Check through the player's inventory
         FoundItems = []
         for i in Player.InventorySystem.Inventory:
-            if i["name"] == args[1]:
+            if Player.InventorySystem.Inventory[i]["name"] == args[1]:
                 FoundItems.append(Player.InventorySystem.Inventory[i])
 
-        print(args[1])
         if len(FoundItems) == 1:
             Player.InventorySystem.Inventory[i]["checkbehavior"]()
             return
@@ -245,9 +299,13 @@ def RegisterVerbs():
             Choice = input("Which item would you like to check: ")
             if FoundItems[choice] != None:
                 FoundItems[choice]["checkbehavior"]()
+            return
 
         #Check things in proximity
         #Store prices, etc
+
+        print("I'm not sure what that is.")
+        print()
 
     VerbSystem.AddVerb(
         verb = "check",
@@ -292,15 +350,15 @@ def RegisterItems():
 
         print(row)
 
-        for i in range(len(Map)):
+        for y in range(len(MapSystem.Map)):
             row = ""
 
             #Compass Rose
-            if i == 0:
+            if y == 0:
                 row = row + "   " + "N"
-            elif i == 1:
+            elif y == 1:
                 row = row + " " + "W" + " + " + "E"
-            elif i == 2     :
+            elif y == 2     :
                 row = row + "   " + "S"
 
             #Map Tile Wall
@@ -308,16 +366,13 @@ def RegisterItems():
             row = row + "║"
 
             #Map Tiles
-            for k in range(len(Map)):
-                tileType = Map[i][k].get("type", "")
-                tilePlayer = Map[i][k].get("player", False)
+            for x in range(len(MapSystem.Map)):
+                tileType = MapSystem.Map[y][x].get("type", "")
                 marker = "[ ]"
                 if tileType == "wall":
                     marker = "[■]"
                 elif tileType == "door":
                     marker = "[D]"
-                elif tilePlayer == True:
-                    marker = "[X]"
                 elif tileType == "gunstore":
                     marker = "[G]"
                 elif tileType == "police":
@@ -326,6 +381,9 @@ def RegisterItems():
                     marker = "[Q]"
                 elif tileType == "spawn":
                     marker = "[S]"
+
+                if Player.Position[0] == y and Player.Position[1] == x:
+                    marker = "[X]"
                 row = row + marker
 
             #Map Tile Wall
@@ -342,16 +400,16 @@ def RegisterItems():
             ]
 
             #Legend Rows
-            if i < len(legendData):
-                row = row + " " + "║" + legendData[i][0] + "║" + " " + legendData[i][1]
-                if len(legendData[i][1]) < 13:
+            if y < len(legendData):
+                row = row + " " + "║" + legendData[y][0] + "║" + " " + legendData[y][1]
+                if len(legendData[y][1]) < 13:
                     row = row + "\t" + "\t" + "║"
                 else:
                     row = row + "\t" + "║"
 
-            elif i == len(legendData):
+            elif y == len(legendData):
                 row = row + " " + "╚" + "═" + "╩"
-                for i in range(21):
+                for y in range(21):
                     row = row + "═"
                 row = row + "╝"
 
@@ -366,4 +424,4 @@ def RegisterItems():
         return
     ITEM_Map["checkbehavior"] = CheckBehavior
 
-main()
+NewGame()
