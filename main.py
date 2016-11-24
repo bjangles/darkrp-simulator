@@ -4,65 +4,146 @@ import os
 import random
 import string
 
-newGameMessages = [
-"At last, you have finally finished downloading sixty gigabytes of content only paid users can access. Your eyes are filled with colors and your ears are overwhelmed with the sound of screaming prepubescent children. The world is your oyster.",
-"You have finally arrived in the promised land. It's a shame, though. You were just starting to like that Scary Monsters & Nice Sprites remix played at full volume.",
-"34 minutes and 12 seconds later. If only you had more time, you could've memorized the rules!",
-"Woah! You totally forgot you were joining a server. Now it's time to stop forgetting and start regretting.",
-]
-
 misunderstoodMessages = [
-"I'm sorry, I didn't quite catch that.",
-"I'm not sure I understand what you mean.",
-"This is an English-only server.",
-"Huh?",
-"Pardon?",
-"Could you rephrase that?",
-"What a concept!",
+	"I'm sorry, I didn't quite catch that.",
+	"I'm not sure I understand what you mean.",
+	"This is an English-only server.",
+	"Huh?",
+	"Pardon?",
+	"Could you rephrase that?",
 ]
 
-generalHelp = [
-"Commands should be structured in the following form:",
-"<verb> [<noun>, ...]",
-"Using additional words when appropriate.",
-"",
-"Examples:",
-">help",
-">help example",
-">read rules",
-]
+class VerbSystem:
+	def __init__(self):
+		self.Verbs = {}
 
-rules = [
-"=====Lasciate ogne speranza, voi ch'intrate=====",
-"Rule 1: No cheating/exploiting/hacking/misbehaving/tomfoolery/mischief/deviation",
-"Rule 2: No random death matching, henceforth known as 'artyem'",
-"Rule 3: Any actions, covert or otherwise, displayed in a roleplaying context must be advertised publicly to everybody on the server. Absolutely no exceptions.",
-"Rule 4: Absolutely no disrespect to members of our staff will be tolerated. Unprovoked abuse towards unprivileged players is otherwise acceptable.",
-"Rule 5: Artyem is absolutely prohibited, unless you provide a warning milliseconds beforehand.",
-"Rule 6: All roleplaying chat must be broadcast in out-of-character chat, in order to ensure maximum 'arpee' experience.",
-"Rule 7: Any behavior that deviates from raiding is FailArpee and will not be tolerated under any circumstances.",
-"Rule 8: Attempting to modify your voice in any way, natural or digitally assisted, is grounds for an immediate ban.",
-" *** Your eyes glaze over as the rule count extends into the hundreds. *** ",
-]
+	def AddVerb(self, **kwargs):
+		VerbEntry = {}
 
-def generatemap(size):
+		for k in kwargs:
+			VerbEntry[k] = kwargs[k]
+
+		self.Verbs[kwargs["verb"]] = VerbEntry
+
+	def Execute(self, args):
+		Verb = args.split()[0]
+		Entry = self.Verbs.get(Verb, None)
+
+		if Entry != None:
+			Entry["function"](args.split())
+			if Entry["endturn"]:
+				HandleTurn()
+		else:
+			print(random.choice(misunderstoodMessages))
+			print()
+
+class Inventory:
+	def __init__(self):
+		self.Inventory = {}
+
+	#Takes a dict with attributes of an item
+	#Returns True if successful, False otherwise
+	def AddItem(self, item):
+		ItemEntry = self.Inventory.get(item["name"], None)
+		IsItemUnique = item.get("unique", False)
+
+		if item["unique"]:
+			if ItemEntry != None:
+				self.Inventory[item["name"]] = item
+				return True
+			else:
+				#User already has unique item, so return False to notify this
+				return False
+		else:
+			#The item we're adding is not unique, so append some random numbers to the key in order to prevent KeyValue errors
+			#Probably not the best way to tackle the problem, but cheap
+			self.Inventory[item["name"] + string(random.randomint(1000, 9999))] = item
+			return True
+
+	#Returns True if successful, False otherwise
+	def RemoveItem(self, key):
+		if self.Inventory.pop(key, None) != None:
+			return True
+		else:
+			return False
+
+class Player:
+	def __init__(self):
+		self.Health = 100
+		self.Cash = 1000
+		self.Banned = False
+
+		self.Skills = {}
+		self.Skills["Intelligence"] = 4
+		self.Skills["Charisma"] = 4
+		self.Skills["Perception"] = 4
+		self.Skills["Agility"] = 4
+		self.Skills["Luck"] = 4
+
+		self.Position = (0, 0)
+
+	def Spawn(self):
+		#Find a spawn tile, and move us there
+		#Also set our health back to full
+		SpawnTile = None
+		for y in Map:
+			for x in Map:
+				if Map[x][y].get("type", "") == "spawn":
+					SpawnTile = (x, y)
+					break
+		self.Position = SpawnTile
+		self.Health = 100
+
+	def Roll(self, attribute, luck=True, silent=False):
+		#Roll a number, from 1 to 20, then add the attribute's value
+		Roll = random.randint(1, 20)
+		if not silent:
+			print("You cast the die: " + str(Roll))
+
+		Roll += int(self.Skills[attribute] / 2)
+		if not silent:
+			print("Your " + attribute.lower() + " aids your chances: " + str(Roll))
+
+		#Add luck attribute, if desired
+		if luck:
+			if (self.Skills["Luck"]/2)/10 > random.random():
+				Roll += 4
+				if not silent:
+					print("A group of leprechauns smile upon you: " + str(Roll))
+
+		if not silent:
+			print()
+		return Roll
+
+def HandleTurn():
+	Player.Roll("Intelligence", True, True)
+	print()
+
+def FluctuatePlayers():
+    global PlayerCount
+    global AdminCount
+
+    #Define behavior for player count to fluctuate
+    chance = random.randint(1, 6) #1/6 chance :^)
+    if chance == 1 and PlayerCount > 1:
+        PlayerCount -= 1
+        if random.random() <= AdminCount/PlayerCount and AdminCount > 0:
+            AdminCount -= 1
+    elif chance == 6:
+        PlayerCount += 1
+        if random.random() <= AdminCount/PlayerCount:
+            AdminCount += 1
+
+
+def BuildMap(size):
     global Map
 
-    '''for i in range(size):
-        Map[i] = {}
-        for k in range(size):
-            tile = Map[i][k] = {}
-            tile["type"] = ""    
-            if random.random() > 0.9:
-                tile["type"] = "wall"
-            if i == 6 and k == 6:
-                tile["type"] = "player"'''
-
+    #rp_seriousarpee_v1
     Map = [
                     [{"type": ""}, {"type": ""}, {"type": ""}, {"type": "wall"}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": "wall"}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""},],
                     [{"type": ""}, {"type": ""}, {"type": ""}, {"type": "wall"}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": "wall"}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""},],
                     [{"type": ""}, {"type": ""}, {"type": ""}, {"type": "wall"}, {"type": "wall"}, {"type": "wall"}, {"type": "wall"}, {"type": "wall"}, {"type": ""}, {"type": ""}, {"type": "wall"}, {"type": "wall"}, {"type": "wall"}, {"type": ""}, {"type": ""},],
-                    [{"type": "wall"}, {"type": "wall"}, {"type": "door"}, {"type": "wall"}, {"type": "", "player": True}, {"type": ""}, {"type": ""}, {"type": "door"}, {"type": ""}, {"type": ""}, {"type": "wall"}, {"type": "wall"}, {"type": "wall"}, {"type": ""}, {"type": ""},],
+                    [{"type": "wall"}, {"type": "wall"}, {"type": "door"}, {"type": "wall"}, {"type": "spawn"}, {"type": ""}, {"type": ""}, {"type": "door"}, {"type": ""}, {"type": ""}, {"type": "wall"}, {"type": "wall"}, {"type": "wall"}, {"type": ""}, {"type": ""},],
                     [{"type": ""}, {"type": "door"}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": "wall"}, {"type": "wall"}, {"type": "wall"}, {"type": "wall"}, {"type": "wall"}, {"type": "wall"}, {"type": ""}, {"type": ""},],
                     [{"type": ""}, {"type": "wall"}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": "wall"}, {"type": "door"}, {"type": "wall"},],
                     [{"type": ""}, {"type": "wall"}, {"type": ""}, {"type": "wall"}, {"type": "door"}, {"type": "wall"}, {"type": "wall"}, {"type": ""}, {"type": "wall"}, {"type": "wall"}, {"type": "wall"}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""},],
@@ -76,332 +157,39 @@ def generatemap(size):
                     [{"type": ""}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": "wall"}, {"type": "wall"}, {"type": "wall"}, {"type": "wall"}, {"type": ""}, {"type": ""}, {"type": "wall"}, {"type": ""}, {"type": ""}, {"type": ""}, {"type": ""},],
                 ]
 
-def printmap():
-    print()
+def CreateVariables():
+	#Global Variables
+    	global Cash
+    	Cash = 1000
+    	global Health
+    	Health = 100
+    	global Banned
+    	Banned = False
+    	global PlayerCount
+    	PlayerCount = random.randint(4, 64)
+    	global AdminCount
+    	AdminCount = random.randint(0, int(PlayerCount - PlayerCount * 0.75))
+    	global Attitude
+    	Attitude = 0
+    	global AttitudeMod
+    	AttitudeMod = 0
 
-    #Map Header
-    row = "\t" + "╔"
-    for i in range(45):
-        row = row + "═"
-    row = row + "╗"
+def main():
+	global VerbSystem
+	VerbSystem = VerbSystem()
 
-    #Legend Header
-    row = row + "\t" + "╔" + "═" + "╦"
-    for _ in range(21):
-        row = row + "═"
-    row = row + "╗"
+	global Player
+	Player = Player()
 
-    print(row)
+	def run(args):
+		print()
+	VerbSystem.AddVerb(
+		verb = "run",
+		function = run,
+		endturn = True,
+		)
 
-    for i in range(len(Map)):
-        row = ""
+	while True:
+		VerbSystem.Execute(input(">").lower())
 
-        #Compass Rose
-        if i == 0:
-            row = row + "   " + "N"
-        elif i == 1:
-            row = row + " " + "W" + " + " + "E"
-        elif i == 2     :
-            row = row + "   " + "S"
-
-        #Map Tile Wall
-        row = row + "\t"
-        row = row + "║"
-
-        #Map Tiles
-        for k in range(len(Map)):
-            tileType = Map[i][k].get("type", "")
-            tilePlayer = Map[i][k].get("player", False)
-            marker = "[ ]"
-            if tileType == "wall":
-                marker = "[■]"
-            elif tileType == "door":
-                marker = "[D]"
-            elif tilePlayer == True:
-                marker = "[X]"
-            elif tileType == "gunstore":
-                marker = "[G]"
-            elif tileType == "police":
-                marker = "[P]"
-            row = row + marker
-
-        #Map Tile Wall
-        row = row + "║"
-
-        legendData = [
-            ("X", "You!"),
-            ("P", "Police Station"),
-            ("G", "Gun Store"),
-            ("Q", "Prop Blocking"),
-            ("D", "Door"),
-            ("■", "Wall"),
-        ]
-
-        #Legend Rows
-        if i < len(legendData):
-            row = row + " " + "║" + legendData[i][0] + "║" + " " + legendData[i][1]
-            if len(legendData[i][1]) < 13:
-                row = row + "\t" + "\t" + "║"
-            else:
-                row = row + "\t" + "║"
-
-        elif i == len(legendData):
-            row = row + " " + "╚" + "═" + "╩"
-            for i in range(21):
-                row = row + "═"
-            row = row + "╝"
-
-
-        print(row)
-
-    row = "\t" + "╚"
-    for i in range(45):
-        row = row + "═"
-    row = row + "╝"
-    print(row)
-
-def adjacenttiles():
-    global Position
-    nTile = False
-    sTile = False
-    wTile = False
-    eTile = False
-
-    if not Position[0] == 0:
-        nTile = Map[Position[0] - 1][Position[1]]
-    if not Position[0] == 14:
-        sTile = Map[Position[0] + 1][Position[1]]
-    if not Position[1] == 0:
-        wTile = Map[Position[0]][Position[1] - 1]
-    if not Position[1] == 14:
-        eTile = Map[Position[0]][Position[1] + 1]
-
-    return {nTile, sTile, wTile, eTile}
-
-def newgame():
-    #Global Variables
-    global Cash
-    global Health
-    global Banned
-    global Intelligence
-    global Perception
-    global Charisma
-    global Luck
-    global PlayerCount
-    global AdminCount
-    global Attitude
-    global AttitudeMod
-    global Position
-    global hasAK47
-    global hasShotgun
-    global hasM4A1
-    global hasDEagle
-    global Map
-    global Position
-
-    Cash = 1000
-    Health = 100
-    Banned = False
-    Intelligence = random.randint(1, 10)
-    Perception = random.randint(1, 10)
-    Charisma = random.randint(1, 10)
-    Luck = random.randint(1, 10)
-    PlayerCount = random.randint(4, 64)
-    AdminCount = random.randint(0, int(PlayerCount - PlayerCount * 0.75))
-    Attitude = 0
-    AttitudeMod = 0
-    Position = {3, 4}
-    hasAK47 = False
-    hasShotgun = False
-    hasM4A1 = False
-    hasDEagle = False
-
-    Map = {}
-    Position = (0, 0)
-
-    generatemap(15)
-
-
-    #Handle attitude so our initial status message is accurate
-    handlePlayers()
-    handleAttitude()
-
-    #Clear screen for     a e s t h e t i c s
-    for i in range(1, 60):
-        print()
-    
-    #Print loading message
-    print(newGameMessages[random.randint(1, len(newGameMessages))-1])
-    print()
-
-    print("Players Online: " + str(PlayerCount))
-    print("Admins Online: " + str(AdminCount))
-    print("Server Attitude: " + translateAttitude(Attitude))    
-    print()
-
-    listen()
-
-def translateAttitude(amt):
-    if amt <= 25:
-        return "Calm"
-    elif amt > 25 and amt < 75:
-        return "Unrest"
-    elif amt >=75 and amt < 100:
-        return "Anarchy"
-    elif amt >= 100:
-        return "Complete Anarchy"
-
-#Verbs
-def read(args):
-    if len(args) < 2:
-        print("What do you want to read?")
-        print()
-        return
-    if args[1] == "rules":
-        for i in rules:
-            print(i)
-        print() 
-    elif args[1] == "book":
-        print("That's the spirit! Stay in school, kid.")
-        print()
-    elif True:
-        print("Erm, I'm not really sure what you want me to read.")
-        print()
-
-def respawn():
-    global Health
-    if Health < 1:
-        print("You have respawned.")
-        Health = 100
-        #Set player position to spawnpoint
-        hasAK47 = False
-        hasShotgun = False
-        hasM4A1 = False
-        hasDEagle = False
-    else:
-        print("... You aren't dead, dummy.")
-    print()
-
-def help(args):
-    if len(args) < 2:
-        for i in generalHelp:
-            print(i)
-    elif args[1] == "example":
-        print("... Really?")
-        print()
-    elif True:
-        print("Not sure what you're talking about, kiddo")
-        print()
-
-def check(args):
-    if len(args) < 2:
-        print("... Check what?")
-        print()
-        return
-    if args[1] == "players" or args[1] == "playercount":
-        print("Players Online: " + str(PlayerCount))
-        print()
-    elif args[1] == "admins" or args[1] == "admincount":
-        print("Admins Online: " + str(AdminCount))
-        print()
-    elif args[1] == "attitude":
-        print("Server Attitude: " + translateAttitude(Attitude))
-        print()
-    elif args[1] == "health":
-        print("Health: " + str(Health))
-        print()
-    elif args[1] == "map":
-        printmap()
-        print()
-    elif True:
-        print("I'm not sure what that is, really.")
-        print()
-
-#Adjust attitude per-turn
-def handleAttitude():
-    #Attitude mod: actions which temporarily sway attitude
-    global Attitude
-    global AttitudeMod
-    newAttitude = AttitudeMod
-
-    #Gradually decay adjusters
-    if AttitudeMod > 0:
-        if AdminCount / PlayerCount >= 0.1:
-            newAttitude = newAttitude - 3
-        else:
-            newAttitude = newAttitude - 1
-
-    #Set our new adjusters value
-    AttitudeMod = newAttitude
-
-    #Base attitude calculations
-    if AdminCount == 0:
-        newAttitude = newAttitude + 50
-    if AdminCount / PlayerCount < 0.1:
-        newAttitude = newAttitude + 25
-    if PlayerCount > 30:
-        newAttitude = newAttitude + 20
-
-    #Set our new attitude!
-    Attitude = newAttitude
-
-def handlePlayers():
-    global PlayerCount
-    global AdminCount
-    #Define behavior for player count to fluctuate
-    chance = random.randint(1, 7) #1/6 chance :^)
-    if chance == 1 and PlayerCount > 1:
-        PlayerCount -= 1
-        if random.random() <= AdminCount/PlayerCount and AdminCount > 0:
-            AdminCount -= 1
-    elif chance == 6:
-        PlayerCount += 1
-        if random.random() <= AdminCount/PlayerCount:
-            AdminCount += 1
-
-#Execute per-turn functions, where appropriate(such as when a non-status verb has been used)
-def handleTurn():
-    #Player Fluctuations
-    handlePlayers()
-
-    #Server Attitude
-    handleAttitude()
-
-def parse(command):
-    executeAction = True
-
-    words = command.split(" ")
-    verb = words[0]
-    
-    if verb == "read":
-        read(words)
-    elif verb == "respawn":
-        respawn()
-    elif verb == "check":
-        check(words)
-        executeAction = False
-    elif verb == "help":
-        help(words)
-        executeAction = False
-    elif verb == "quit" or verb == "disconnect":
-        print("You have disconnected from the server.")
-        print()
-        response = input("Find a new server? (Y/n) ")
-        if response == "n" or response == "no":
-            raise SystemExit(0)
-        elif True:
-            newgame()
-    elif True:
-        print(misunderstoodMessages[random.randint(1, len(misunderstoodMessages)-1)])
-        print()
-        executeAction = False
-
-    if executeAction:
-        handleTurn()
-
-def listen():
-    while not Banned:
-        parse(input(">"))
-
-
-newgame()
+main()
